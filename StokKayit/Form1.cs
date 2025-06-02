@@ -36,7 +36,7 @@ namespace StokKayit
  
 
         }
-        SqlConnection bagla = new SqlConnection("Data Source=DESKTOP-I2PIJ4I;Initial Catalog=stoktakipp;Integrated Security=True;Encrypt=False");
+        SqlConnection bagla = new SqlConnection("Data Source=DESKTOP-JK33KA7;Initial Catalog=stoktakipp;Integrated Security=True;Encrypt=False");
 
         public void verilerigoster(string veriler)
         {
@@ -66,36 +66,32 @@ namespace StokKayit
         {
             try
             {
-                // Bağlantıyı kontrol et
                 if (bagla.State == ConnectionState.Closed)
-                {
-                    bagla.Open();  // Bağlantıyı açıyoruz, sadece bağlantı kapalıysa
-                }
+                    bagla.Open();
 
-                // SQL komutunu oluşturuyoruz, tarih alanı veritabanı tarafından otomatik atanacak
-                SqlCommand komut = new SqlCommand("insert into stoktakiptablosuu(ürünkodu,alışfiyatı,satışfiyatı,miktarı,toplammaliyet) values (@ürünkodu,@alışfiyatı,@satışfiyatı,@miktarı,@toplammaliyet)", bagla);
+                // Verileri al ve toplammaliyet hesapla
+                string urunKodu = textBox1.Text;
+                decimal alisFiyati = Convert.ToDecimal(textBox2.Text);
+                decimal satisFiyati = Convert.ToDecimal(textBox3.Text);
+                int miktar = Convert.ToInt32(textBox4.Text);
+                decimal toplamMaliyet = alisFiyati * miktar;
 
-                // Parametreleri ekliyoruz
-                komut.Parameters.AddWithValue("@ürünkodu", textBox1.Text);
-                komut.Parameters.AddWithValue("@alışfiyatı", textBox2.Text);
-                komut.Parameters.AddWithValue("@satışfiyatı", textBox3.Text);
-                komut.Parameters.AddWithValue("@miktarı", textBox4.Text);
-                // `tarih` parametresini eklemedik çünkü veritabanında otomatik atanacak
+                SqlCommand komut = new SqlCommand("INSERT INTO stoktakiptablosuu (ürünkodu, alışfiyatı, satışfiyatı, miktarı, toplammaliyet) VALUES (@ürünkodu, @alışfiyatı, @satışfiyatı, @miktarı, @toplammaliyet)", bagla);
 
-                // SQL komutunu çalıştırıyoruz
+                komut.Parameters.AddWithValue("@ürünkodu", urunKodu);
+                komut.Parameters.AddWithValue("@alışfiyatı", alisFiyati);
+                komut.Parameters.AddWithValue("@satışfiyatı", satisFiyati);
+                komut.Parameters.AddWithValue("@miktarı", miktar);
+                komut.Parameters.AddWithValue("@toplammaliyet", toplamMaliyet); // BU SATIR EKSİKTİ!
+
                 int result = komut.ExecuteNonQuery();
 
                 if (result > 0)
-                {
                     MessageBox.Show("Veri başarıyla eklendi.");
-                }
                 else
-                {
                     MessageBox.Show("Veri eklenemedi.");
-                }
 
-                // Veritabanı verilerini güncelliyoruz
-                verilerigoster("select * from stoktakiptablosuu");
+                verilerigoster("SELECT * FROM stoktakiptablosuu");
             }
             catch (Exception ex)
             {
@@ -103,19 +99,14 @@ namespace StokKayit
             }
             finally
             {
-                // Bağlantıyı kapatıyoruz
                 if (bagla.State == ConnectionState.Open)
-                {
                     bagla.Close();
-                }
 
-                // TextBox'ları temizliyoruz
                 textBox1.Clear();
                 textBox2.Clear();
                 textBox3.Clear();
                 textBox4.Clear();
 
-                // Toplamları hesaplıyoruz
                 CalculateAndDisplayTotals();
             }
         }
@@ -286,7 +277,15 @@ namespace StokKayit
 
         private void Form1_Load(object sender, EventArgs e)
         {
-           
+            this.Text = $"Stok Takip - Hoşgeldiniz: {Program.GirisYapanKullanici} ({Program.GirisYapanRol})";
+
+            if (Program.GirisYapanRol != "Admin")
+            {
+                button2.Enabled = false; // Ekle
+                button3.Enabled = false; // Sil
+                button4.Enabled = false; // Güncelle
+                button4.Enabled = false; // Satış
+            }
         }
 
         private void txtUrunKoduAra_TextChanged(object sender, EventArgs e)
